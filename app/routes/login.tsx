@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { createClient } from '@supabase/supabase-js';
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+
+  // Initialize Supabase client (replace with your actual Supabase URL and anon key)
+  const supabaseUrl = 'https://lrcjmzkiylrxhzqopzaz.supabase.co';
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyY2ptemtpeWxyeGh6cW9wemF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA1ODgsImV4cCI6MjA2ODY3NjU4OH0.RqzIQRaR7CAZxHZLsCP-ARf9mKAFNwS-U0Y4Qt7FEGY';
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -14,21 +20,21 @@ export default function Login() {
     e.preventDefault();
     setMessage("");
     try {
-      const res = await fetch("https://react-demo12-au82-688ix8dun-ramakanthn-conquerorstes-projects.vercel.app/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
       });
-      const data = await res.json();
-      if (res.ok) {
+      if (error) {
+        setMessage(error.message || "Login failed.");
+      } else if (data && data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
         setMessage("Login successful!");
         navigate('/home');
       } else {
-        setMessage(data.error || "Login failed.");
+        setMessage("Login failed.");
       }
     } catch (err) {
-      setMessage("Error connecting to server.");
+      setMessage("Error connecting to Supabase.");
     }
   };
 
