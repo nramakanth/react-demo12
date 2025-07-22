@@ -1,16 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../supabase';
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-
-  // Initialize Supabase client (replace with your actual Supabase URL and anon key)
-  const supabaseUrl = 'https://lrcjmzkiylrxhzqopzaz.supabase.co';
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyY2ptemtpeWxyeGh6cW9wemF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA1ODgsImV4cCI6MjA2ODY3NjU4OH0.RqzIQRaR7CAZxHZLsCP-ARf9mKAFNwS-U0Y4Qt7FEGY';
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -19,22 +14,50 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
+    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Step 1: Sign in
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       });
-      if (error) {
-        setMessage(error.message || "Login failed.");
-      } else if (data && data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setMessage("Login successful!");
-        navigate('/home');
-      } else {
-        setMessage("Login failed.");
+
+      if (authError) {
+        console.error('Authentication error:', authError);
+        setMessage(authError.message);
+        return;
       }
+
+      if (!authData?.user) {
+        setMessage("Login failed. Please check your credentials.");
+        return;
+      }
+
+      // Step 2: After successful login, fetch user data from your database
+      const { data: userData, error: dbError } = await supabase
+        .from('users')  // replace with your table name
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        setMessage("Logged in but couldn't fetch user data.");
+        return;
+      }
+
+      // Store both auth and user data
+      localStorage.setItem('user', JSON.stringify({
+        ...authData.user,
+        userData: userData
+      }));
+
+      setMessage("Login successful!");
+      navigate('/home');
+
     } catch (err) {
-      setMessage("Error connecting to Supabase.");
+      console.error('Unexpected error:', err);
+      setMessage("An unexpected error occurred. Please try again later.");
     }
   };
 

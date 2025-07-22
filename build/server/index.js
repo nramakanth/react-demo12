@@ -105,6 +105,19 @@ const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   default: root,
   links
 }, Symbol.toStringTag, { value: "Module" }));
+const supabaseUrl = "https://lrcjmzkiylrxhzqopzaz.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyY2ptemtpeWxyeGh6cW9wemF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA1ODgsImV4cCI6MjA2ODY3NjU4OH0.RqzIQRaR7CAZxHZLsCP-ARf9mKAFNwS-U0Y4Qt7FEGY";
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: "pkce"
+  },
+  db: {
+    schema: "public"
+  }
+});
 const login = UNSAFE_withComponentProps(function Login() {
   const [form, setForm] = useState({
     email: "",
@@ -112,9 +125,6 @@ const login = UNSAFE_withComponentProps(function Login() {
   });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const supabaseUrl = "https://lrcjmzkiylrxhzqopzaz.supabase.co";
-  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyY2ptemtpeWxyeGh6cW9wemF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxMDA1ODgsImV4cCI6MjA2ODY3NjU4OH0.RqzIQRaR7CAZxHZLsCP-ARf9mKAFNwS-U0Y4Qt7FEGY";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -126,23 +136,39 @@ const login = UNSAFE_withComponentProps(function Login() {
     setMessage("");
     try {
       const {
-        data,
-        error
+        data: authData,
+        error: authError
       } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password
       });
-      if (error) {
-        setMessage(error.message || "Login failed.");
-      } else if (data && data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setMessage("Login successful!");
-        navigate("/home");
-      } else {
-        setMessage("Login failed.");
+      if (authError) {
+        console.error("Authentication error:", authError);
+        setMessage(authError.message);
+        return;
       }
+      if (!(authData == null ? void 0 : authData.user)) {
+        setMessage("Login failed. Please check your credentials.");
+        return;
+      }
+      const {
+        data: userData,
+        error: dbError
+      } = await supabase.from("users").select("*").eq("id", authData.user.id).single();
+      if (dbError) {
+        console.error("Database error:", dbError);
+        setMessage("Logged in but couldn't fetch user data.");
+        return;
+      }
+      localStorage.setItem("user", JSON.stringify({
+        ...authData.user,
+        userData
+      }));
+      setMessage("Login successful!");
+      navigate("/home");
     } catch (err) {
-      setMessage("Error connecting to Supabase.");
+      console.error("Unexpected error:", err);
+      setMessage("An unexpected error occurred. Please try again later.");
     }
   };
   return /* @__PURE__ */ jsx("div", {
@@ -381,7 +407,7 @@ const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   __proto__: null,
   default: register
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-g5HDvKiO.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": true, "module": "/assets/root-B5RrDXFz.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": ["/assets/root-xwpmPkd9.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "login-page": { "id": "login-page", "parentId": "root", "path": "/", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/login-BbHrmS1H.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/home": { "id": "routes/home", "parentId": "root", "path": "/home", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/home-Dgsr6olj.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/register": { "id": "routes/register", "parentId": "root", "path": "/register", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/register-BVjnaZHW.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-8fcbf5bc.js", "version": "8fcbf5bc", "sri": void 0 };
+const serverManifest = { "entry": { "module": "/assets/entry.client-g5HDvKiO.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": true, "module": "/assets/root-DFjPj765.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": ["/assets/root-80ZyBZvR.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "login-page": { "id": "login-page", "parentId": "root", "path": "/", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/login-CgCyr2vC.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/home": { "id": "routes/home", "parentId": "root", "path": "/home", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/home-Dgsr6olj.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/register": { "id": "routes/register", "parentId": "root", "path": "/register", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasErrorBoundary": false, "module": "/assets/register-BVjnaZHW.js", "imports": ["/assets/chunk-EF7DTUVF-D2ElF7Tq.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-1ca8426a.js", "version": "1ca8426a", "sri": void 0 };
 const assetsBuildDirectory = "build\\client";
 const basename = "/";
 const future = { "unstable_middleware": false, "unstable_optimizeDeps": false, "unstable_splitRouteModules": false, "unstable_subResourceIntegrity": false, "unstable_viteEnvironmentApi": false };
